@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Multiplier</title>
+</head>
+
+<body>
+Enter First Number: <input id="first">
+Enter Second Number: <input id="second">
+<button onclick="multiply()">Multiply</button>
+Result is: <input id="answer">
+
+<script>
+	function multiply(){
+        var a,b,c;
+        a=Number(document.getElementById("first").value);
+        b=Number(document.getElementById("second").value);
+        c= a * b;
+        document.getElementById("answer").value= c;
+	}
+	</script>
+
+</body>
+
+</html>
