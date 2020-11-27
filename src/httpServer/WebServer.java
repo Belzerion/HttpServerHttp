@@ -109,11 +109,29 @@ public class WebServer {
                         DELETE(out,resourceName);
                     }
                     else{
-                        GET(out, NOT_IMPLEMENTED_501);
+                        out.write(headerWithoutBody("501 Not Implemented").getBytes());
+                        BufferedInputStream nI = new BufferedInputStream(new FileInputStream(NOT_IMPLEMENTED_501));
+                        int a;
+                        byte[] buf = new byte[256];
+                        while ((a = nI.read(buf)) != -1) {
+                            out.write(buf, 0, a);
+                        }
+                        nI.close();
+                        out.flush();
+                        //GET(out, NOT_IMPLEMENTED_501);
                     }
                 }
                 else{
-                    GET(out, FORBIDDEN_403);
+                    out.write(headerWithoutBody("403 Forbidden").getBytes());
+                    BufferedInputStream forbidden = new BufferedInputStream(new FileInputStream(FORBIDDEN_403));
+                    int a;
+                    byte[] buf = new byte[256];
+                    while ((a = forbidden.read(buf)) != -1) {
+                        out.write(buf, 0, a);
+                    }
+                    forbidden.close();
+                    out.flush();
+                    //GET(out, FORBIDDEN_403);
                 }
                 out.flush();
                 remote.close();
