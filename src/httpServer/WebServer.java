@@ -21,16 +21,32 @@ public class WebServer {
     /**
      * WebServer constructor.
      */
+
+    /**
+     * Path du dossier auquel le client a accès.
+     */
     private String RESOURCES_PATH = "Resources";
 
+    /**
+     * Path du fichier NotFound.html
+     */
     private String FILE_NOT_FOUND_HTML = "Resources/notFound.html";
 
+    /**
+     * Path du fichier index.html
+     */
     private String INDEX_HTML = "Resources/index.html";
-
+    /**
+     * Path du fichier Not Implemented.html
+     */
     private String NOT_IMPLEMENTED_501 = "Resources/Not implemented.html";
-
+    /**
+     * Path du fichier forbidden.html
+     */
     private String FORBIDDEN_403 = "Resources/forbidden.html";
-
+    /**
+     * Path du fichier InternalServerError.html
+     */
     private String INTERNAL_500 = "Resources/InternalServerError.html";
 
     protected void start() throws IOException {
@@ -269,7 +285,7 @@ public class WebServer {
      * dont le path est passé en paramètre
      * @param out flux de sorite (envoi des données vers le client)
      * @param resourceName path du fichier dont on veut recevoir les méta données
-     * @throws IOException
+     * @throws IOException Erreur d'écriture dans le flux de sortie vers le client.
      */
     private void HEAD(BufferedOutputStream out, String resourceName) throws IOException {
         try {
