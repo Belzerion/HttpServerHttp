@@ -61,9 +61,11 @@ public class WebServer {
                 // stop reading once a blank line is hit. This
                 // blank line signals the end of the client HTTP
                 // headers.
-                String str = ".";
-                str = in.readLine();
+                String str = "";
 
+                str += in.readLine();
+
+                System.out.println(str);
                 if(str == null)
                     continue;
                 System.out.println("REQUEST: "+str);
@@ -106,6 +108,11 @@ public class WebServer {
         }
     }
 
+    /**
+     * Méthode DELETE du protocole HTTP. Supprime le fichier dont le path est passé en paramètre.
+     * @param out flux de sortie (envoi de données vers le client)
+     * @param resourceName chemin de la ressource à supprimer.
+     */
     private void DELETE(BufferedOutputStream out, String resourceName) {
         try {
             File resources = new File(RESOURCES_PATH);
@@ -135,31 +142,56 @@ public class WebServer {
             File fileToDelete = new File(RESOURCES_PATH + "/" + resourceWanted);
             fileToDelete.delete();
         }catch(Exception e){
-
         }
     }
 
+
+    /**
+     * Méthode PUT du protocole HTTP. Upload ou crée un fichier sur le serveur. Si le path d'upload spécifié par le client était déjà existant
+     * la ressource à ce path est supprimée et remplacée.
+     * @param in flux d'entrée (réception des données de la part du client
+     * @param out flux de sortie (envoi de données vers le client
+     * @param resourceName path de la ressource à uplaod.
+     */
     private void PUT(BufferedReader in, BufferedOutputStream out, String resourceName) {
         try {
             File resource = new File(resourceName);
             boolean exists = resource.exists();
-            if(!exists)
-                resource.createNewFile();
-            else{
+
+            if(!exists) {
+                //resource.createNewFile();
+            }else{
                 resource.delete();
-                resource.createNewFile();
+                //resource.createNewFile();
             }
-            System.out.println(exists);
-            PrintWriter eraser = new PrintWriter(resource);
-            eraser.close();
             BufferedOutputStream fileWriter = new BufferedOutputStream(new FileOutputStream(resource));
-            while(in.ready()){
-                fileWriter.write(in.read());
+            String test = "";
+            String buf = "";
+            int compt = 0;
+            while(in.ready()) {
+                int a = in.read();
+                test += (char) a;
+                if (test.endsWith("\r\n\r\n")){
+                    ++compt;
+                }
+                if(compt == 2) {
+                    if ((char) a != '\n') {
+                        buf += (char) a;
+                    } else {
+                        if (!buf.startsWith("----------------------------")) {
+                            buf += (char) a;
+                            fileWriter.write(buf.getBytes());
+                            buf = "";
+                        } else {
+                            break;
+                        }
+                    }
+                }
             }
             fileWriter.flush();
             fileWriter.close();
             if(exists){
-                out.write(headerWithoutBody("204 No Content").getBytes());
+                out.write(headerWithoutBody("200 OK").getBytes());
             }else{
                 out.write(headerWithoutBody("201 Created").getBytes());
             }
@@ -175,6 +207,13 @@ public class WebServer {
         }
     }
 
+    /**
+     * Méthode POST du protocole HTTP. Fonctionnement similaire à la méthode PUT si le path du fichier spécifié n'existe pas, c'est à dire création
+     * du fichier. Si une ressource se trouve déjà au path spécifié, POST ajoute les données reçus à la fin du fichier déjà existant.
+     * @param in flux d'entrée (réception des données de la part du client)
+     * @param out flux de sortie (envoi des données vers le client)
+     * @param resourceName Path de la ressource à POST.
+     */
     private void POST(BufferedReader in, BufferedOutputStream out, String resourceName) {
         try {
             File resource = new File(resourceName);
@@ -182,16 +221,34 @@ public class WebServer {
             if(!exists)
                 resource.createNewFile();
             System.out.println(exists);
-            PrintWriter eraser = new PrintWriter(resource);
-            eraser.close();
             BufferedOutputStream fileWriter = new BufferedOutputStream(new FileOutputStream(resource,true));
+            String test = "";
+            String buf = "";
+            int compt = 0;
             while(in.ready()){
-                fileWriter.write(in.read());
+                int a = in.read();
+                test += (char) a;
+                if (test.endsWith("\r\n\r\n")){
+                    ++compt;
+                }
+                if(compt == 2) {
+                    if ((char) a != '\n') {
+                        buf += (char) a;
+                    } else {
+                        if (!buf.startsWith("----------------------------")) {
+                            buf += (char) a;
+                            fileWriter.write(buf.getBytes());
+                            buf = "";
+                        } else {
+                            break;
+                        }
+                    }
+                }
             }
             fileWriter.flush();
             fileWriter.close();
             if(exists){
-                out.write(headerWithoutBody("204 No Content").getBytes());
+                out.write(headerWithoutBody("200 OK").getBytes());
             }else{
                 out.write(headerWithoutBody("201 Created").getBytes());
             }
@@ -207,6 +264,13 @@ public class WebServer {
         }
     }
 
+    /**
+     * Méthode HEAD du protocole HTTP. Envoi d'un header au client, contenant les méta données du fichier associé au path en paramètre.
+     * dont le path est passé en paramètre
+     * @param out flux de sorite (envoi des données vers le client)
+     * @param resourceName path du fichier dont on veut recevoir les méta données
+     * @throws IOException
+     */
     private void HEAD(BufferedOutputStream out, String resourceName) throws IOException {
         try {
             File resources = new File(RESOURCES_PATH);
@@ -238,6 +302,11 @@ public class WebServer {
         }
     }
 
+    /**
+     * Méthode GET du protocole HTTP. Envoi au client le contenu du fichier dont le path est passé en paramètre.
+     * @param out flux de sortie (envoi des données vers le client)
+     * @param resourceName path du fichier dont on veut récupérer le contenu.
+     */
     private void GET(BufferedOutputStream out, String resourceName) {
         try {
             File resources = new File(RESOURCES_PATH);
@@ -291,15 +360,27 @@ public class WebServer {
         }
     }
 
-    protected String headerWithoutBody(String status) {
-        String header = "HTTP/1.1 " + status + "\r\n";
+    /**
+     * Crée un header qui contient simplement le code HTTP passé en paramètre
+     * @param info code HTTP passé en paramètre
+     * @return
+     */
+    protected String headerWithoutBody(String info) {
+        String header = "HTTP/1.1 " + info + "\r\n";
         header += "Server: Bot\r\n";
         header += "\r\n";
         return header;
     }
 
-    public String headerWithBody(String status,  String file, long length){
-        String header = "HTTP/1.1 " + status + "\r\n";
+    /**
+     * Crée un header qui contient le code HTTP passé en paramètre ainsi que les métadonnées du fichier passé en paramètre.
+     * @param info Code HTTP
+     * @param file path du fichier
+     * @param length taille du fichier
+     * @return
+     */
+    public String headerWithBody(String info,  String file, long length){
+        String header = "HTTP/1.1 " + info + "\r\n";
         if(file.endsWith(".html"))
             header += "Content-Type: text/html\r\n";
         else if(file.endsWith(".jpeg") || file.endsWith(".jpg"))
